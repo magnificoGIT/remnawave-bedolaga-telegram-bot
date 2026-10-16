@@ -45,7 +45,12 @@ from app.services.pinned_message_service import (
 )
 from app.states import AdminStates
 from app.utils.decorators import admin_required, error_handler
-from app.utils.miniapp_buttons import BUTTON_KEY_TO_CABINET_PATH, build_miniapp_or_callback_button
+from app.utils.miniapp_buttons import (
+    BUTTON_KEY_TO_CABINET_PATH,
+    SUBSCRIPTION_ICON_EMOJI_ID,
+    build_miniapp_or_callback_button,
+    strip_leading_emoji,
+)
 from app.utils.timezone import format_local_datetime, local_day_start
 
 
@@ -112,12 +117,22 @@ def create_broadcast_keyboard(
             if button_key not in selected_buttons:
                 continue
             button_config = button_config_map[button_key]
+            icon_id = SUBSCRIPTION_ICON_EMOJI_ID if button_key == 'subscription' else None
             if settings.is_cabinet_mode() and button_key in CABINET_MINIAPP_BUTTON_KEYS:
                 row_buttons.append(
                     build_miniapp_or_callback_button(
                         text=button_config['text'],
                         callback_data=button_config['callback'],
                         cabinet_path=BUTTON_KEY_TO_CABINET_PATH.get(button_key, ''),
+                        icon_custom_emoji_id=icon_id,
+                    )
+                )
+            elif icon_id:
+                row_buttons.append(
+                    types.InlineKeyboardButton(
+                        text=strip_leading_emoji(button_config['text']),
+                        callback_data=button_config['callback'],
+                        icon_custom_emoji_id=icon_id,
                     )
                 )
             else:

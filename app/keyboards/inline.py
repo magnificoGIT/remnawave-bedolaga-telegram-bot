@@ -11,7 +11,11 @@ from app.database.models import User
 from app.localization.loader import DEFAULT_LANGUAGE
 from app.localization.texts import get_texts
 from app.utils.legacy_subscription import is_legacy_subscription as _legacy_subscription
-from app.utils.miniapp_buttons import build_miniapp_or_callback_button
+from app.utils.miniapp_buttons import (
+    SUBSCRIPTION_ICON_EMOJI_ID,
+    build_miniapp_or_callback_button,
+    strip_leading_emoji,
+)
 from app.utils.price_display import PriceInfo, format_price_button
 from app.utils.pricing_utils import (
     apply_percentage_discount,
@@ -422,6 +426,12 @@ def _build_cabinet_main_menu_keyboard(
                 style=resolved,
                 icon_custom_emoji_id=resolved_emoji or None,
             )
+        if icon_custom_emoji_id:
+            return InlineKeyboardButton(
+                text=strip_leading_emoji(text),
+                callback_data=callback_fallback,
+                icon_custom_emoji_id=icon_custom_emoji_id,
+            )
         return InlineKeyboardButton(text=text, callback_data=callback_fallback)
 
     # -- Collect row definitions sorted by row_N key --
@@ -492,7 +502,10 @@ def _build_cabinet_main_menu_keyboard(
                         else texts.MENU_SUBSCRIPTION
                     )
                     sub_text = section_cfg.get('labels', {}).get(language, '') or default_sub_text
-                    row_buttons.append(_cabinet_button(sub_text, '/subscription', 'menu_subscription'))
+                    sub_icon = None if settings.is_multi_tariff_enabled() else SUBSCRIPTION_ICON_EMOJI_ID
+                    row_buttons.append(
+                        _cabinet_button(sub_text, '/subscription', 'menu_subscription', icon_custom_emoji_id=sub_icon)
+                    )
 
                 case 'balance':
                     if not section_cfg.get('enabled', True):
@@ -683,7 +696,16 @@ def get_main_menu_keyboard(
             if settings.is_multi_tariff_enabled()
             else texts.MENU_SUBSCRIPTION
         )
-        paired_buttons.append(InlineKeyboardButton(text=sub_btn_text, callback_data='menu_subscription'))
+        if settings.is_multi_tariff_enabled():
+            paired_buttons.append(InlineKeyboardButton(text=sub_btn_text, callback_data='menu_subscription'))
+        else:
+            paired_buttons.append(
+                InlineKeyboardButton(
+                    text=strip_leading_emoji(sub_btn_text),
+                    callback_data='menu_subscription',
+                    icon_custom_emoji_id=SUBSCRIPTION_ICON_EMOJI_ID,
+                )
+            )
 
         # Добавляем кнопку докупки трафика для лимитированных подписок
         # В режиме тарифов проверяем tariff_id (детальная проверка в хендлере)

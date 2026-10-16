@@ -3,6 +3,7 @@ from typing import Any
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from app.localization.texts import get_texts
+from app.utils.miniapp_buttons import SUBSCRIPTION_ICON_EMOJI_ID, strip_leading_emoji
 
 
 def _t(texts, key: str, default: str) -> str:
@@ -1111,8 +1112,9 @@ def get_user_management_keyboard(
                 text=_t(texts, 'ADMIN_USER_BALANCE', '💰 Баланс'), callback_data=f'admin_user_balance_{user_id}'
             ),
             InlineKeyboardButton(
-                text=_t(texts, 'ADMIN_USER_SUBSCRIPTION_SETTINGS', '📱 Подписка и настройки'),
+                text=strip_leading_emoji(_t(texts, 'ADMIN_USER_SUBSCRIPTION_SETTINGS', '📱 Подписка и настройки')),
                 callback_data=f'admin_user_subscription_{user_id}',
+                icon_custom_emoji_id=SUBSCRIPTION_ICON_EMOJI_ID,
             ),
         ],
         [

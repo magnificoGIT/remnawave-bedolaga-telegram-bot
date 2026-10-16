@@ -36,6 +36,10 @@ def strip_leading_emoji(text: str) -> str:
     return _LEADING_EMOJI_RE.sub('', text, count=1)
 
 
+# Кастомный emoji 📱 для кнопок «Подписка» (подставляется вместо юникод-эмодзи в тексте).
+SUBSCRIPTION_ICON_EMOJI_ID = '5375064649395906640'
+
+
 # Mapping from callback_data to cabinet frontend paths.
 # Used for automatic deep-linking when explicit ``cabinet_path`` is not provided.
 # If callback_data is NOT in this mapping, the button falls back to a regular callback.
@@ -243,6 +247,12 @@ def build_miniapp_or_callback_button(
                     icon_custom_emoji_id=resolved_emoji or None,
                 )
 
+    if icon_custom_emoji_id:
+        return InlineKeyboardButton(
+            text=strip_leading_emoji(text),
+            callback_data=callback_data,
+            icon_custom_emoji_id=icon_custom_emoji_id,
+        )
     return InlineKeyboardButton(text=text, callback_data=callback_data)
 
 
