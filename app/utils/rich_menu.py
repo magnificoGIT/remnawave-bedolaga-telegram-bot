@@ -519,17 +519,19 @@ async def _build_single_subscription_block(user: User, texts, db: AsyncSession) 
 
     current_time = datetime.now(UTC)
     end_date = getattr(subscription, 'end_date', None)
-    start_date = getattr(subscription, 'start_date', None)
+    # start_date = getattr(subscription, 'start_date', None)  # нужен только шкале срока
     actual_status = (subscription.actual_status or '').lower()
     if not is_daily_tariff and end_date and end_date > current_time and actual_status in {'active', 'trial'}:
-        seconds_left = (end_date - current_time).total_seconds()
-        total_seconds = (end_date - start_date).total_seconds() if start_date else 0
+        # Шкала срока подписки отключена — показываем только «истекает через …».
+        # seconds_left = (end_date - current_time).total_seconds()
+        # total_seconds = (end_date - start_date).total_seconds() if start_date else 0
         relative_template = texts.t('MAIN_MENU_RICH_EXPIRES_RELATIVE', '⏳ истекает {when}')
         days_left_text = texts.t('MAIN_MENU_RICH_DAYS_LEFT', 'осталось {days} дн.').replace(
             '{days}', str(local_days_until(end_date, current_time))
         )
         relative_line = _rich_text(relative_template).replace('{when}', _tg_time(end_date, 'r', days_left_text))
-        lines.append(f'<code>{_progress_bar(seconds_left, total_seconds)}</code> {relative_line}')
+        # lines.append(f'<code>{_progress_bar(seconds_left, total_seconds)}</code> {relative_line}')
+        lines.append(relative_line)
 
     if actual_status in {'active', 'trial', 'limited'}:
         traffic_template = texts.t('MAIN_MENU_RICH_TRAFFIC', '📊 Трафик: {traffic}')
