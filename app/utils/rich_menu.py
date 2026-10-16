@@ -565,7 +565,8 @@ async def build_main_menu_rich_html(user: User, texts, db: AsyncSession) -> str:
     username = getattr(user, 'username', None)
     has_name = bool(getattr(user, 'first_name', None) or getattr(user, 'last_name', None))
     user_name = format_username_link(username) if username and not has_name else html.escape(user.full_name or '')
-    blocks.append(f'<h4>👤 {user_name}</h4>')
+    user_heading = texts.t('MAIN_MENU_RICH_USER_HEADING', '👤 {name}')
+    blocks.append(f'<h4>{_rich_text(user_heading).replace("{name}", user_name)}</h4>')
     blocks.append('<hr/>')
 
     if settings.is_multi_tariff_enabled():
