@@ -1688,7 +1688,7 @@
   "SUB_STATUS_ACTIVE_TODAY": "💎 Активна\n⚠️ истекает сегодня!",
   "SUB_STATUS_ACTIVE_TOMORROW": "💎 Активна\n⚠️ истекает завтра!",
   "SUB_STATUS_DAILY_ACTIVE": "💎 Активна",
-  "SUB_STATUS_EXPIRED": "🔴 Истекла\n📅 {end_date}",
+  "SUB_STATUS_EXPIRED": "<tg-emoji emoji-id=\"5375420036464815870\">🔺</tg-emoji> Истекла\n📅 {end_date}",
   "SUB_STATUS_DISABLED": "⚫ Отключена",
   "SUB_STATUS_PENDING": "⏳ Ожидает активации",
   "SUB_STATUS_NONE": "❌ Отсутствует",
