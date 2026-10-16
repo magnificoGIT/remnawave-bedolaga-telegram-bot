@@ -267,8 +267,9 @@ def get_channel_sub_keyboard(
     buttons.append(
         [
             InlineKeyboardButton(
-                text=texts.t('CHANNEL_CHECK_BUTTON', '✅ Я подписался'),
+                text=texts.t('CHANNEL_CHECK_BUTTON', 'Я подписался'),
                 callback_data='sub_channel_check',
+                icon_custom_emoji_id='5260416304224936047',
             )
         ]
     )
