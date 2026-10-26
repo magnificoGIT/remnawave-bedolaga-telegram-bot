@@ -213,6 +213,7 @@ async def test_registration_privacy_policy_drops_unsupported_markup(monkeypatch)
 
     policy = SimpleNamespace(is_enabled=True, content='<h1>Политика</h1>' + RICH_HTML)
     monkeypatch.setattr(start.PrivacyPolicyService, 'get_policy', AsyncMock(return_value=policy))
+    monkeypatch.setattr(start, 'get_info_page_by_slug', AsyncMock(return_value=None))
     callback = _RegistrationCallback()
     state = AsyncMock()
 
@@ -232,6 +233,7 @@ async def test_registration_privacy_policy_of_bare_tags_falls_back_to_default(mo
     policy = SimpleNamespace(is_enabled=True, content='<p> </p><h1></h1>')
     monkeypatch.setattr(start.PrivacyPolicyService, 'get_policy', AsyncMock(return_value=policy))
     monkeypatch.setattr(start, 'get_privacy_policy', lambda _language: '<p>Политика <b>по умолчанию</b></p>')
+    monkeypatch.setattr(start, 'get_info_page_by_slug', AsyncMock(return_value=None))
     callback = _RegistrationCallback()
 
     shown = await start._show_privacy_policy_after_rules(callback, AsyncMock(), AsyncMock(), 'ru')

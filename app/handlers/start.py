@@ -18,6 +18,7 @@ from app.database.crud.campaign import (
     get_campaign_by_id,
     get_campaign_by_start_parameter,
 )
+from app.database.crud.info_pages import get_info_page_by_slug
 from app.database.crud.subscription import decrement_subscription_server_counts
 from app.database.crud.user import (
     create_user_no_commit,
@@ -28,6 +29,7 @@ from app.database.crud.user import (
 )
 from app.database.crud.user_message import get_random_active_message
 from app.database.models import GuestPurchase, PinnedMessage, SubscriptionStatus, UserStatus
+from app.handlers.menu import _resolve_info_page_text
 from app.keyboards.inline import (
     get_back_keyboard,
     get_language_selection_keyboard,
@@ -1884,6 +1886,27 @@ async def _rules_for_telegram(language: str) -> str:
     return html_to_telegram(await get_rules(language)) or html_to_telegram(get_default_rules(language))
 
 
+PRIVACY_POLICY_SHORT_SLUG = 'privacy-policy-short'
+
+
+async def _get_short_privacy_policy_html(db: AsyncSession, language: str) -> str | None:
+    """
+    Краткая политика для шага регистрации — инфо-страница PRIVACY_POLICY_SHORT_SLUG.
+
+    Полная системная политика (кабинет, меню «Инфо») от этого не меняется.
+    display_mode не проверяется: страницу можно скрыть из меню, а здесь показывать.
+    """
+    try:
+        page = await get_info_page_by_slug(db, PRIVACY_POLICY_SHORT_SLUG)
+    except Exception as e:
+        logger.warning('Не удалось получить краткую политику конфиденциальности', error=e)
+        return None
+
+    if not page or not page.is_active:
+        return None
+    return _resolve_info_page_text(page.content, language) or None
+
+
 async def _show_privacy_policy_after_rules(
     callback: types.CallbackQuery,
     state: FSMContext,
@@ -1902,17 +1925,33 @@ async def _show_privacy_policy_after_rules(
 
     # Политика редактируется в кабинете как HTML, а Telegram понимает восемь тегов —
     # без преобразования <h1>/<p> из редактора роняли этот шаг регистрации.
-    privacy_policy_text = html_to_telegram(policy.content)
-    if not privacy_policy_text:
-        privacy_policy_text = html_to_telegram(get_privacy_policy(language))
-        if not privacy_policy_text:
-            logger.info('⚠️ Политика конфиденциальности включена, но дефолтный текст пустой, пропускаем показ')
-            return False
+    # Сначала краткая версия из инфо-страницы, иначе — полная системная, затем дефолт из локали.
+    privacy_policy_text = html_to_telegram(await _get_short_privacy_policy_html(db, language))
+    if privacy_policy_text:
         logger.info(
-            '🔒 Используется дефолтный текст политики конфиденциальности из локализации для языка', language=language
+            '🔒 Используется краткая политика конфиденциальности из инфо-страницы',
+            policy_version='short',
+            slug=PRIVACY_POLICY_SHORT_SLUG,
+            language=language,
         )
     else:
-        logger.info('🔒 Используется политика конфиденциальности из БД для языка', language=language)
+        privacy_policy_text = html_to_telegram(policy.content)
+        if not privacy_policy_text:
+            privacy_policy_text = html_to_telegram(get_privacy_policy(language))
+            if not privacy_policy_text:
+                logger.info('⚠️ Политика конфиденциальности включена, но дефолтный текст пустой, пропускаем показ')
+                return False
+            logger.info(
+                '🔒 Используется дефолтный текст политики конфиденциальности из локализации для языка',
+                policy_version='default',
+                language=language,
+            )
+        else:
+            logger.info(
+                '🔒 Используется политика конфиденциальности из БД для языка',
+                policy_version='system',
+                language=language,
+            )
 
     try:
         await edit_long_text(
